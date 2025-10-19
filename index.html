@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggie Skate Spots - Texas A&M</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #500000 0%, #1a0000 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            animation: fadeInDown 0.6s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 3px solid #fff;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo {
+            font-size: 4em;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .tagline {
+            color: #fff;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .howdy-banner {
+            background: linear-gradient(90deg, #500000, #fff, #500000);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #500000;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            animation: fadeIn 1s ease;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #fff;
+            color: #fff;
+            padding: 15px 35px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .tab-btn:hover {
+            background: #fff;
+            color: #500000;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #500000;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-section {
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px dashed #fff;
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-section:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .button {
+            background: #fff;
+            color: #500000;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 35px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .button:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        }
+
+        .button.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 2px solid #fff;
+        }
+
+        .preview-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .image-container {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7);
+            border: 3px solid #fff;
+        }
+
+        .preview-image {
+            width: 100%;
+            display: block;
+        }
+
+        .overlay-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            display: none;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .score-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 3px solid #fff;
+        }
+
+        .gig-em-rating {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .score-number {
+            font-size: 4.5em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .score-label {
+            font-size: 1.5em;
+            color: #fff;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .aggie-badge {
+            background: #fff;
+            color: #500000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .tricks-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #fff;
+        }
+
+        .tricks-title {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #fff;
+            transition: all 0.3s ease;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .analysis-card.warning {
+            border-color: #ffaa00;
+        }
+
+        .analysis-card.danger {
+            border-color: #ff4444;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .ai-insight {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .save-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .save-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #500000;
+            padding: 50px;
+            border-radius: 25px;
+            max-width: 600px;
+            width: 90%;
+            border: 3px solid #fff;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #fff;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1.1em;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        #map {
+            height: 600px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 3px solid #fff;
+        }
+
+        .saved-spots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .spot-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 3px solid #fff;
+        }
+
+        .spot-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .spot-card.selected {
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.7);
+        }
+
+        .spot-card-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .spot-card-content {
+            padding: 25px;
+        }
+
+        .spot-card-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .spot-card-rating {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .spot-card-score {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .comparison-side {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            border: 3px solid #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 5em;
+            margin-bottom: 25px;
+        }
+
+        .delete-btn {
+            background: rgba(255, 68, 68, 0.3);
+            color: #fff;
+            border: 2px solid #ff4444;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 68, 68, 0.6);
+        }
+
+        .campus-spots-section {
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #fff;
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .best-time-badge {
+            background: #fff;
+            color: #500000;
+            padding: 8px 15px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 5px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5em; }
+            .comparison-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">👍🛹</div>
+            <h1>Aggie Skate Spots</h1>
+            <p class="tagline">Texas A&M's Premier Skateboarding Community</p>
+        </header>
+
+        <div class="howdy-banner">
+            🤠 HOWDY! Find the best skate spots around Aggieland 🤠
+        </div>
+
+        <!-- Weather Widget -->
+        <div id="weatherWidget" style="background: rgba(255,255,255,0.1); border: 3px solid #fff; border-radius: 20px; padding: 20px; margin-bottom: 30px; text-align: center; display: none;">
+            <div style="font-size: 1.3em; font-weight: bold; margin-bottom: 10px;">🌤️ Current Conditions in College Station</div>
+            <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 15px;">
+                <div>
+                    <div style="font-size: 2.5em;" id="weatherIcon">☀️</div>
+                    <div style="font-size: 2em; font-weight: bold;" id="weatherTemp">--°F</div>
+                </div>
+                <div style="text-align: left;">
+                    <div style="margin: 5px 0;">💨 Wind: <span id="weatherWind">--</span> mph</div>
+                    <div style="margin: 5px 0;" id="weatherCondition">Loading...</div>
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                        <strong id="skateRecommendation">🛹 Checking conditions...</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('analyze')">Analyze Spot</button>
+            <button class="tab-btn" onclick="switchTab('campus')">Campus Spots</button>
+            <button class="tab-btn" onclick="switchTab('saved')">My Spots</button>
+            <button class="tab-btn" onclick="switchTab('map')">Map</button>
+            <button class="tab-btn" onclick="switchTab('compare')">Compare</button>
+            <button class="tab-btn" onclick="switchTab('session')">Session Timer</button>
+            <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
+        </div>
+
+        <div id="analyzeTab" class="tab-content active">
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📸</div>
+                <h2>Upload a Spot Photo</h2>
+                <p style="margin-top: 15px; font-size: 1.1em;">Find a spot around campus? Let's analyze it!</p>
+                <input type="file" id="fileInput" accept="image/*">
+                <button class="button" id="uploadBtn">Choose Photo</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <h2>Analyzing spot...</h2>
+            </div>
+
+            <div class="preview-section" id="previewSection">
+                <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 1.1em; font-weight: bold;">
+                        <div style="width: 25px; height: 25px; border-radius: 5px; border: 2px solid #fff; background: rgba(0, 255, 136, 0.7);"></div>
+                        <span>Good to Skate</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 1.1em; font-weight: bold;">
+                        <div style="width: 25px; height: 25px; border-radius: 5px; border: 2px solid #fff; background: rgba(255, 170, 0, 0.7);"></div>
+                        <span>Be Careful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 1.1em; font-weight: bold;">
+                        <div style="width: 25px; height: 25px; border-radius: 5px; border: 2px solid #fff; background: rgba(255, 68, 68, 0.7);"></div>
+                        <span>Avoid</span>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img id="previewImage" class="preview-image">
+                    <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="results" id="results">
+                <div class="ai-insight" id="aiInsight"></div>
+                <div class="score-card">
+                    <div class="gig-em-rating" id="gigEmRating">👍</div>
+                    <div class="score-number" id="scoreNumber">0</div>
+                    <div class="score-label" id="scoreLabel">Gig 'Em Rating</div>
+                    <div class="aggie-badge">✓ Verified by an Aggie</div>
+                </div>
+                <div class="tricks-section">
+                    <div class="tricks-title">🎯 Recommended Tricks</div>
+                    <div id="tricksList"></div>
+                </div>
+                <div class="tricks-section">
+                    <div class="tricks-title">⏰ Best Times</div>
+                    <div id="bestTimes">
+                        <span class="best-time-badge">Early Morning</span>
+                        <span class="best-time-badge">Late Evening</span>
+                        <span class="best-time-badge">Weekends</span>
+                    </div>
+                </div>
+                <div class="analysis-grid" id="analysisGrid"></div>
+                <div style="text-align: center; margin-top: 40px;">
+                    <button class="button" onclick="openSaveModal()">💾 Save Spot</button>
+                    <button class="button secondary" onclick="resetAnalyzer()">Analyze Another</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="campusTab" class="tab-content">
+            <div class="campus-spots-section">
+                <h2 style="text-align: center; font-size: 2em; margin-bottom: 20px;">🏫 Popular Campus Spots</h2>
+                <div id="campusSpotsGrid" class="saved-spots-grid"></div>
+            </div>
+        </div>
+
+        <div id="savedTab" class="tab-content">
+            <div id="savedSpotsContainer"></div>
+        </div>
+
+        <div id="mapTab" class="tab-content">
+            <div id="map"></div>
+        </div>
+
+        <div id="compareTab" class="tab-content">
+            <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 30px;">Compare Spots</h2>
+            <div id="comparisonSpots"></div>
+            <div id="comparisonResults"></div>
+        </div>
+
+        <div id="sessionTab" class="tab-content">
+            <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 30px;">⏱️ Session Timer</h2>
+            
+            <div style="max-width: 800px; margin: 0 auto;">
+                <!-- Timer Display -->
+                <div class="score-card" style="margin-bottom: 30px;">
+                    <div style="font-size: 5em; font-weight: bold; margin-bottom: 20px;" id="sessionTime">00:00:00</div>
+                    <div style="font-size: 1.5em; margin-bottom: 20px;" id="sessionStatus">Ready to Skate!</div>
+                    
+                    <div style="display: flex; justify-content: center; gap: 40px; margin: 30px 0; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 3em; font-weight: bold;" id="sessionTricksCount">0</div>
+                            <div>Tricks Landed</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 3em; font-weight: bold;" id="sessionScore">0</div>
+                            <div>Session Score</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="button" id="startSessionBtn" onclick="startSession()">Start Session</button>
+                        <button class="button secondary" id="stopSessionBtn" onclick="stopSession()" style="display:none;">Stop Session</button>
+                        <button class="button secondary" onclick="addTrick()">+ Landed Trick</button>
+                    </div>
+                </div>
+                
+                <!-- Spot Selection for Session -->
+                <div class="tricks-section">
+                    <div class="tricks-title">📍 Select Your Spot (Optional)</div>
+                    <select id="sessionSpotSelect" style="width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #fff; background: rgba(255,255,255,0.2); color: #fff; font-size: 1.1em;">
+                        <option value="">Choose a spot...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="leaderboardTab" class="tab-content">
+            <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 30px;">🏆 Leaderboard</h2>
+            
+            <div class="score-card" style="margin-bottom: 30px;">
+                <div style="font-size: 1.3em; margin-bottom: 15px;">Top Sessions</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">Score = (Minutes + Tricks×10) × Spot Difficulty</div>
+            </div>
+            
+            <div id="leaderboardList"></div>
+        </div>
+    </div>
+
+    <div class="save-modal" id="saveModal">
+        <div class="modal-content">
+            <h2 style="color: #fff; margin-bottom: 25px;">💾 Save This Spot</h2>
+            <div class="form-group">
+                <label>Spot Name</label>
+                <input type="text" id="spotName" placeholder="e.g., MSC Plaza Ledges">
+            </div>
+            <div class="form-group">
+                <label>Nearest Building</label>
+                <select id="spotBuilding">
+                    <option value="">Select...</option>
+                    <option value="MSC" data-lat="30.6122" data-lng="-96.3425">MSC</option>
+                    <option value="Kyle Field" data-lat="30.6100" data-lng="-96.3400">Kyle Field</option>
+                    <option value="Zachry" data-lat="30.6197" data-lng="-96.3408">Zachry</option>
+                    <option value="Evans Library" data-lat="30.6120" data-lng="-96.3440">Evans Library</option>
+                    <option value="Academic Building" data-lat="30.6180" data-lng="-96.3434">Academic Building</option>
+                    <option value="Commons" data-lat="30.6232" data-lng="-96.3398">Commons</option>
+                    <option value="Rec Center" data-lat="30.6159" data-lng="-96.3376">Rec Center</option>
+                    <option value="Other" data-lat="30.6122" data-lng="-96.3413">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notes (optional)</label>
+                <textarea id="spotNotes" placeholder="Tips, security info, best times..."></textarea>
+            </div>
+            <div style="text-align: center;">
+                <button class="button" onclick="saveSpot()">Save</button>
+                <button class="button secondary" onclick="closeSaveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let imageAnalysisData = null;
+        let currentAnalysis = null;
+        let map = null;
+        let selectedComparison = [];
+        
+        // Session Timer Variables
+        let sessionStartTime = null;
+        let sessionInterval = null;
+        let sessionTricks = 0;
+        let currentSessionSpot = null;
+        
+        // College Station coordinates for weather
+        const CSTAT_LAT = 30.6280;
+        const CSTAT_LNG = -96.3344;
+
+        const campusSpots = [
+            { id: 9001, name: "MSC Plaza", building: "MSC", score: 8.5, rating: "👍👍", lat: 30.6122, lng: -96.3425, 
+              image: "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23500000' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='30'%3EMSC Plaza%3C/text%3E%3C/svg%3E",
+              tricks: "Perfect for flatground, ledges, tech skating", notes: "Smooth concrete. Best: early morning/evening" },
+            { id: 9002, name: "Zachry Stairs", building: "Zachry", score: 7.2, rating: "👍", lat: 30.6197, lng: -96.3408,
+              image: "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23500000' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='30'%3EZachry Stairs%3C/text%3E%3C/svg%3E",
+              tricks: "Good for stair sets, gaps", notes: "Security patrols. Go early." },
+            { id: 9003, name: "Academic Plaza", building: "Academic", score: 9.1, rating: "👍👍👍", lat: 30.6180, lng: -96.3434,
+              image: "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23500000' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='30'%3EAcademic Plaza%3C/text%3E%3C/svg%3E",
+              tricks: "Excellent for all tricks!", notes: "Best spot on campus!" }
+        ];
+
+        window.addEventListener('DOMContentLoaded', function() {
+            loadCampusSpots();
+            loadSavedSpots();
+            fetchWeather(); // Load weather on startup
+            loadSessionSpots(); // Populate spot dropdown
+            
+            document.getElementById('uploadBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.getElementById('fileInput').addEventListener('change', e => {
+                if (e.target.files[0]) handleFile(e.target.files[0]);
+            });
+        });
+        
+        // ===========================================
+        // WEATHER INTEGRATION (Open-Meteo Free API)
+        // ===========================================
+        
+        async function fetchWeather() {
+            try {
+                // API request with College Station coordinates
+                // We get: temperature, weather code, and wind speed
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${CSTAT_LAT}&longitude=${CSTAT_LNG}&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Extract current conditions
+                const temp = Math.round(data.current.temperature_2m);
+                const weatherCode = data.current.weather_code;
+                const windSpeed = Math.round(data.current.wind_speed_10m);
+                
+                displayWeather(temp, weatherCode, windSpeed);
+            } catch (error) {
+                console.error('Weather fetch failed:', error);
+                document.getElementById('weatherWidget').style.display = 'none';
+            }
+        }
+        
+        function displayWeather(temp, code, wind) {
+            // Show weather widget
+            document.getElementById('weatherWidget').style.display = 'block';
+            
+            // Interpret weather code into icon and description
+            let icon = '☀️';
+            let condition = 'Clear';
+            
+            if (code === 0) {
+                icon = '☀️'; condition = 'Clear sky';
+            } else if (code <= 3) {
+                icon = '⛅'; condition = 'Partly cloudy';
+            } else if (code === 45 || code === 48) {
+                icon = '🌫️'; condition = 'Foggy';
+            } else if (code >= 51 && code <= 67) {
+                icon = '🌧️'; condition = 'Rainy';
+            } else if (code >= 71 && code <= 77) {
+                icon = '❄️'; condition = 'Snowy';
+            } else if (code >= 95) {
+                icon = '⛈️'; condition = 'Thunderstorm';
+            }
+            
+            // Update display
+            document.getElementById('weatherIcon').textContent = icon;
+            document.getElementById('weatherTemp').textContent = temp + '°F';
+            document.getElementById('weatherWind').textContent = wind;
+            document.getElementById('weatherCondition').textContent = '📊 ' + condition;
+            
+            // Give skating recommendation based on conditions
+            let recommendation = '';
+            
+            if (code >= 51) {
+                // Rain or worse
+                recommendation = '❌ Not ideal - wet conditions!';
+            } else if (wind > 20) {
+                recommendation = '⚠️ Windy - be careful!';
+            } else if (temp < 40) {
+                recommendation = '🥶 Cold - bundle up!';
+            } else if (temp > 95) {
+                recommendation = '🥵 Hot - stay hydrated!';
+            } else {
+                recommendation = '✅ Perfect skating weather!';
+            }
+            
+            document.getElementById('skateRecommendation').textContent = recommendation;
+        }
+        
+        // ===========================================
+        // SESSION TIMER FUNCTIONALITY
+        // ===========================================
+        
+        function loadSessionSpots() {
+            const select = document.getElementById('sessionSpotSelect');
+            const allSpots = [...campusSpots, ...JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]')];
+            
+            select.innerHTML = '<option value="">Choose a spot...</option>' + 
+                allSpots.map(s => `<option value="${s.id}">${s.name} (${s.score}/10)</option>`).join('');
+        }
+        
+        function startSession() {
+            // Get selected spot if any
+            const selectEl = document.getElementById('sessionSpotSelect');
+            const spotId = parseInt(selectEl.value);
+            
+            if (spotId) {
+                const allSpots = [...campusSpots, ...JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]')];
+                currentSessionSpot = allSpots.find(s => s.id === spotId);
+            } else {
+                currentSessionSpot = { name: 'Unknown Spot', score: 5.0 };
+            }
+            
+            // Initialize session
+            sessionStartTime = Date.now();
+            sessionTricks = 0;
+            
+            // Update UI
+            document.getElementById('startSessionBtn').style.display = 'none';
+            document.getElementById('stopSessionBtn').style.display = 'inline-block';
+            document.getElementById('sessionStatus').textContent = '🛹 Session Active at ' + currentSessionSpot.name;
+            document.getElementById('sessionTricksCount').textContent = '0';
+            document.getElementById('sessionScore').textContent = '0';
+            
+            // Start timer - updates every second
+            sessionInterval = setInterval(() => {
+                const elapsed = Date.now() - sessionStartTime;
+                const totalSeconds = Math.floor(elapsed / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                // Format as HH:MM:SS
+                document.getElementById('sessionTime').textContent = 
+                    `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                
+                // Update score in real-time
+                updateSessionScore(elapsed);
+            }, 1000);
+        }
+        
+        function pad(num) {
+            return num.toString().padStart(2, '0');
+        }
+        
+        function addTrick() {
+            if (!sessionStartTime) {
+                alert('Start a session first!');
+                return;
+            }
+            sessionTricks++;
+            document.getElementById('sessionTricksCount').textContent = sessionTricks;
+            
+            // Update score
+            const elapsed = Date.now() - sessionStartTime;
+            updateSessionScore(elapsed);
+        }
+        
+        function updateSessionScore(elapsed) {
+            // Calculate score based on:
+            // - Minutes skated (1 point per minute)
+            // - Tricks landed (10 points each)
+            // - Spot difficulty multiplier
+            
+            const minutes = elapsed / 60000;
+            const timePoints = Math.floor(minutes);
+            const trickPoints = sessionTricks * 10;
+            const spotMultiplier = currentSessionSpot ? currentSessionSpot.score / 10 : 0.5;
+            
+            const score = Math.round((timePoints + trickPoints) * spotMultiplier);
+            document.getElementById('sessionScore').textContent = score;
+        }
+        
+        function stopSession() {
+            if (!sessionStartTime) return;
+            
+            // Calculate final stats
+            const duration = Date.now() - sessionStartTime;
+            const minutes = Math.floor(duration / 60000);
+            const seconds = Math.floor((duration % 60000) / 1000);
+            const finalScore = parseInt(document.getElementById('sessionScore').textContent);
+            
+            // Save session to history
+            const session = {
+                id: Date.now(),
+                spot: currentSessionSpot.name,
+                spotScore: currentSessionSpot.score,
+                duration: duration,
+                durationText: `${minutes}m ${seconds}s`,
+                tricks: sessionTricks,
+                score: finalScore,
+                date: new Date().toLocaleDateString()
+            };
+            
+            let sessions = JSON.parse(sessionStorage.getItem('skateSessions') || '[]');
+            sessions.push(session);
+            
+            // Keep only top 50 sessions
+            sessions.sort((a, b) => b.score - a.score);
+            if (sessions.length > 50) sessions = sessions.slice(0, 50);
+            
+            sessionStorage.setItem('skateSessions', JSON.stringify(sessions));
+            
+            // Stop timer
+            clearInterval(sessionInterval);
+            sessionInterval = null;
+            sessionStartTime = null;
+            
+            // Reset UI
+            document.getElementById('startSessionBtn').style.display = 'inline-block';
+            document.getElementById('stopSessionBtn').style.display = 'none';
+            document.getElementById('sessionStatus').textContent = `Session Complete! Final Score: ${finalScore} 🎉`;
+            
+            alert(`Great session! 🎉\n\nDuration: ${minutes}m ${seconds}s\nTricks: ${sessionTricks}\nScore: ${finalScore}\n\nCheck the Leaderboard!`);
+        }
+        
+        // ===========================================
+        // LEADERBOARD FUNCTIONALITY
+        // ===========================================
+        
+        function loadLeaderboard() {
+            const sessions = JSON.parse(sessionStorage.getItem('skateSessions') || '[]');
+            const container = document.getElementById('leaderboardList');
+            
+            if (sessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏆</div>
+                        <h2>No Sessions Yet</h2>
+                        <p>Complete a session to appear on the leaderboard!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by score (should already be sorted, but just in case)
+            sessions.sort((a, b) => b.score - a.score);
+            
+            // Take top 10
+            const topSessions = sessions.slice(0, 10);
+            
+            container.innerHTML = topSessions.map((s, index) => {
+                // Medal for top 3
+                let medal = '';
+                if (index === 0) medal = '🥇';
+                else if (index === 1) medal = '🥈';
+                else if (index === 2) medal = '🥉';
+                
+                return `
+                    <div class="analysis-card" style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="font-size: 2.5em; min-width: 50px;">${medal || `#${index + 1}`}</div>
+                                <div>
+                                    <div style="font-size: 1.3em; font-weight: bold;">${s.spot}</div>
+                                    <div style="opacity: 0.8; margin-top: 5px;">📅 ${s.date}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 2em; font-weight: bold; color: #fff;">${s.score}</div>
+                                <div style="margin-top: 5px;">
+                                    ⏱️ ${s.durationText} | 🎯 ${s.tricks} tricks
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadCampusSpots() {
+            const grid = document.getElementById('campusSpotsGrid');
+            grid.innerHTML = campusSpots.map(s => `
+                <div class="spot-card">
+                    <img src="${s.image}" class="spot-card-image">
+                    <div class="spot-card-content">
+                        <div class="spot-card-name">${s.name}</div>
+                        <div class="spot-card-rating">${s.rating}</div>
+                        <div class="spot-card-score">${s.score}/10</div>
+                        <div>🏫 ${s.building}</div>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; font-size: 0.95em;">
+                            <strong>Info:</strong> ${s.notes}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) return alert('Image files only');
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('previewImage').src = e.target.result;
+                analyzeImage();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function analyzeImage() {
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            const img = document.getElementById('previewImage');
+            img.onload = () => {
+                analyzeImageColors(img);
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('previewSection').style.display = 'block';
+                    document.getElementById('results').style.display = 'block';
+                    drawOverlay();
+                    generateResults();
+                }, 2500);
+            };
+        }
+
+        function analyzeImageColors(img) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.height = 100;
+            ctx.drawImage(img, 0, 0, 100, 100);
+            const data = ctx.getImageData(0, 0, 100, 100).data;
+            let gray = 0, green = 0, brown = 0, dark = 0, bright = 0, totalB = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const brightness = (r + g + b) / 3;
+                totalB += brightness;
+                if (Math.abs(r-g)<30 && Math.abs(g-b)<30) gray++;
+                if (g > r+20 && g > b+20) green++;
+                if (r>100 && g>60 && g<150 && b<100) brown++;
+                if (brightness < 80) dark++;
+                if (brightness > 180) bright++;
+            }
+            const total = data.length / 4;
+            imageAnalysisData = {
+                grayPercent: gray/total*100,
+                greenPercent: green/total*100,
+                brownPercent: brown/total*100,
+                darkPercent: dark/total*100,
+                brightPercent: bright/total*100,
+                avgBrightness: totalB/total
+            };
+        }
+
+        function calculateScore() {
+            if (!imageAnalysisData) return 5.0;
+            let s = 5.0;
+            if (imageAnalysisData.grayPercent > 30) s += 2.5;
+            else if (imageAnalysisData.grayPercent > 15) s += 1.5;
+            if (imageAnalysisData.greenPercent > 30) s -= 2.0;
+            else if (imageAnalysisData.greenPercent > 15) s -= 1.0;
+            if (imageAnalysisData.brownPercent > 20) s -= 1.0;
+            if (imageAnalysisData.avgBrightness > 150) s += 1.0;
+            else if (imageAnalysisData.avgBrightness < 80) s -= 0.5;
+            return Math.max(1, Math.min(10, parseFloat(s.toFixed(1))));
+        }
+
+        function getGigEm(score) {
+            if (score >= 9.0) return '👍👍👍';
+            if (score >= 7.5) return '👍👍';
+            if (score >= 6.0) return '👍';
+            return '👎';
+        }
+
+        function drawOverlay() {
+            const img = document.getElementById('previewImage');
+            const canvas = document.getElementById('overlayCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const score = calculateScore();
+            
+            // Generate random zones based on score
+            let zones = [];
+            if (score > 7) {
+                // Mostly good zones - random positions
+                const numGood = 2 + Math.floor(Math.random() * 2); // 2-3 good zones
+                for (let i = 0; i < numGood; i++) {
+                    zones.push({
+                        x: Math.random() * 0.6,
+                        y: Math.random() * 0.6,
+                        w: 0.2 + Math.random() * 0.3,
+                        h: 0.2 + Math.random() * 0.3,
+                        c: 'rgba(0,255,136,0.4)'
+                    });
+                }
+                // Add one caution zone
+                zones.push({
+                    x: Math.random() * 0.7,
+                    y: Math.random() * 0.7,
+                    w: 0.15 + Math.random() * 0.2,
+                    h: 0.15 + Math.random() * 0.2,
+                    c: 'rgba(255,170,0,0.4)'
+                });
+            } else if (score < 4) {
+                // Mostly bad zones - random positions
+                const numBad = 2 + Math.floor(Math.random() * 2); // 2-3 bad zones
+                for (let i = 0; i < numBad; i++) {
+                    zones.push({
+                        x: Math.random() * 0.6,
+                        y: Math.random() * 0.6,
+                        w: 0.25 + Math.random() * 0.3,
+                        h: 0.25 + Math.random() * 0.3,
+                        c: 'rgba(255,68,68,0.4)'
+                    });
+                }
+                // Add one caution zone
+                zones.push({
+                    x: Math.random() * 0.7,
+                    y: Math.random() * 0.7,
+                    w: 0.15 + Math.random() * 0.2,
+                    h: 0.15 + Math.random() * 0.2,
+                    c: 'rgba(255,170,0,0.4)'
+                });
+            } else {
+                // Mixed zones - random positions
+                zones.push({
+                    x: Math.random() * 0.5,
+                    y: Math.random() * 0.5,
+                    w: 0.3 + Math.random() * 0.2,
+                    h: 0.3 + Math.random() * 0.2,
+                    c: 'rgba(255,170,0,0.4)'
+                });
+                zones.push({
+                    x: Math.random() * 0.6,
+                    y: Math.random() * 0.6,
+                    w: 0.2 + Math.random() * 0.25,
+                    h: 0.2 + Math.random() * 0.25,
+                    c: 'rgba(0,255,136,0.4)'
+                });
+                zones.push({
+                    x: Math.random() * 0.5,
+                    y: Math.random() * 0.5,
+                    w: 0.2 + Math.random() * 0.2,
+                    h: 0.2 + Math.random() * 0.2,
+                    c: 'rgba(255,68,68,0.4)'
+                });
+            }
+            
+            // Draw all zones
+            zones.forEach(z => {
+                ctx.fillStyle = z.c;
+                ctx.fillRect(z.x*img.width, z.y*img.height, z.w*img.width, z.h*img.height);
+            });
+            
+            // Add random labels
+            ctx.font = 'bold 18px Arial';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 4;
+            const labelTexts = score > 7 ? ['✓ Good', '✓ Smooth', '✓ Clean'] : 
+                              score < 4 ? ['✗ Rough', '✗ Skip', '✗ Bad'] : 
+                              ['⚠ OK', '⚠ Careful', '✓ Decent'];
+            
+            const numLabels = 2 + Math.floor(Math.random() * 2); // 2-3 labels
+            for (let i = 0; i < numLabels && i < labelTexts.length; i++) {
+                const x = (0.2 + Math.random() * 0.6) * img.width;
+                const y = (0.2 + Math.random() * 0.6) * img.height;
+                ctx.strokeText(labelTexts[i], x, y);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(labelTexts[i], x, y);
+            }
+        }
+
+        function generateResults() {
+            const score = calculateScore();
+            const gigEm = getGigEm(score);
+            const rating = score>=9 ? 'Elite Aggie Spot!' : score>=7.5 ? 'Great Spot!' : score>=6 ? 'Decent Spot' : score>=4 ? 'Challenging' : 'Not Recommended';
+            
+            document.getElementById('scoreNumber').textContent = score + '/10';
+            document.getElementById('scoreLabel').textContent = rating;
+            document.getElementById('gigEmRating').textContent = gigEm;
+            
+            let insight = '🤖 AI: ';
+            if (imageAnalysisData.grayPercent > 30) insight += 'Concrete detected (good). ';
+            if (imageAnalysisData.greenPercent > 30) insight += 'Grass detected (bad). ';
+            if (imageAnalysisData.avgBrightness > 150) insight += 'Well-lit.';
+            document.getElementById('aiInsight').textContent = insight;
+            
+            const tricks = score>=8 ? '🔥 Perfect for: Kickflips, heelflips, grinds, tech tricks' :
+                          score>=6.5 ? '✓ Good for: Ollies, basic grinds, cruising' :
+                          score>=5 ? '⚠ Try: Basic tricks, manuals' : '❌ Not recommended';
+            document.getElementById('tricksList').textContent = tricks;
+            
+            const cards = [];
+            if (score >= 7.5) cards.push({title:'✓ Surface', content:'Smooth surface. Perfect for tricks!', type:'good'});
+            else if (score >= 5) cards.push({title:'⚠ Surface', content:'Moderate roughness. Skateable.', type:'warning'});
+            else cards.push({title:'✗ Surface', content:'Rough surface. Not ideal.', type:'danger'});
+            
+            if (imageAnalysisData.avgBrightness > 150) cards.push({title:'✓ Lighting', content:'Well-lit. Safe for evening skating.', type:'good'});
+            cards.push({title:'👮 Security', content:'Respect campus property. Be courteous!', type:'warning'});
+            
+            const grid = document.getElementById('analysisGrid');
+            grid.innerHTML = cards.map(c => `
+                <div class="analysis-card ${c.type}">
+                    <div class="card-title">${c.title}</div>
+                    <div>${c.content}</div>
+                </div>
+            `).join('');
+            
+            currentAnalysis = {image: document.getElementById('previewImage').src, score, rating, gigEm: gigEm, tricks, insight};
+        }
+
+        function openSaveModal() {
+            document.getElementById('saveModal').classList.add('active');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.remove('active');
+        }
+
+        function saveSpot() {
+            const name = document.getElementById('spotName').value;
+            const buildingSelect = document.getElementById('spotBuilding');
+            const building = buildingSelect.value;
+            const notes = document.getElementById('spotNotes').value;
+            
+            if (!name || !building) return alert('Please fill name and building!');
+            
+            const selectedOption = buildingSelect.options[buildingSelect.selectedIndex];
+            const lat = parseFloat(selectedOption.getAttribute('data-lat'));
+            const lng = parseFloat(selectedOption.getAttribute('data-lng'));
+            
+            const spot = {id: Date.now(), name, building, notes, lat, lng, ...currentAnalysis, savedAt: new Date().toISOString()};
+            let spots = JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]');
+            spots.push(spot);
+            sessionStorage.setItem('aggieSkateSpots', JSON.stringify(spots));
+            
+            closeSaveModal();
+            alert('Spot saved! Gig \'em! 👍');
+            document.getElementById('spotName').value = '';
+            document.getElementById('spotNotes').value = '';
+            document.getElementById('spotBuilding').value = '';
+            loadSessionSpots(); // Update session dropdown
+        }
+
+        function loadSavedSpots() {
+            const spots = JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]');
+            const container = document.getElementById('savedSpotsContainer');
+            
+            if (spots.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><h2>No Saved Spots Yet</h2><p>Analyze and save your first spot!</p></div>';
+                return;
+            }
+            
+            container.innerHTML = '<div class="saved-spots-grid">' + spots.map(s => `
+                <div class="spot-card">
+                    <img src="${s.image}" class="spot-card-image">
+                    <div class="spot-card-content">
+                        <div class="spot-card-name">${s.name}</div>
+                        <div class="spot-card-rating">${s.gigEm}</div>
+                        <div class="spot-card-score">${s.score}/10</div>
+                        <div>🏫 ${s.building}</div>
+                        ${s.notes ? '<div style="margin-top:10px">📝 '+s.notes+'</div>' : ''}
+                        <button class="delete-btn" onclick="deleteSpot(${s.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function deleteSpot(id) {
+            if (!confirm('Delete this spot?')) return;
+            let spots = JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]');
+            spots = spots.filter(s => s.id !== id);
+            sessionStorage.setItem('aggieSkateSpots', JSON.stringify(spots));
+            loadSavedSpots();
+            loadSessionSpots();
+            if (map) initMap();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'analyze') document.getElementById('analyzeTab').classList.add('active');
+            else if (tab === 'campus') document.getElementById('campusTab').classList.add('active');
+            else if (tab === 'saved') {
+                document.getElementById('savedTab').classList.add('active');
+                loadSavedSpots();
+            }
+            else if (tab === 'map') {
+                document.getElementById('mapTab').classList.add('active');
+                setTimeout(initMap, 100);
+            }
+            else if (tab === 'compare') {
+                document.getElementById('compareTab').classList.add('active');
+                loadComparisonView();
+            }
+            else if (tab === 'session') {
+                document.getElementById('sessionTab').classList.add('active');
+                loadSessionSpots();
+            }
+            else if (tab === 'leaderboard') {
+                document.getElementById('leaderboardTab').classList.add('active');
+                loadLeaderboard();
+            }
+        }
+
+        function initMap() {
+            if (map) map.remove();
+            
+            // Create custom marker icon that doesn't need external images
+            const customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background: #500000; width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.5);"></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            map = L.map('map').setView([30.6122, -96.3413], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            campusSpots.forEach(s => {
+                L.marker([s.lat, s.lng], {icon: customIcon}).addTo(map).bindPopup(`<strong>${s.name}</strong><br>${s.rating} ${s.score}/10<br>🏫 ${s.building}`);
+            });
+            
+            const saved = JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]');
+            saved.forEach(s => {
+                L.marker([s.lat, s.lng], {icon: customIcon}).addTo(map).bindPopup(`<strong>${s.name}</strong><br>${s.gigEm} ${s.score}/10<br>🏫 ${s.building}`);
+            });
+        }
+
+        function loadComparisonView() {
+            const allSpots = [...campusSpots, ...JSON.parse(sessionStorage.getItem('aggieSkateSpots') || '[]')];
+            const container = document.getElementById('comparisonSpots');
+            
+            if (allSpots.length < 2) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🤷</div><h2>Not Enough Spots</h2><p>Need at least 2 spots to compare!</p></div>';
+                document.getElementById('comparisonResults').innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = '<div class="saved-spots-grid">' + allSpots.map(s => `
+                <div class="spot-card ${selectedComparison.includes(s.id) ? 'selected' : ''}" onclick="toggleComparison(${s.id})">
+                    <img src="${s.image}" class="spot-card-image">
+                    <div class="spot-card-content">
+                        <div class="spot-card-name">${s.name}</div>
+                        <div class="spot-card-rating">${s.rating || s.gigEm}</div>
+                        <div class="spot-card-score">${s.score}/10</div>
+                        <div>🏫 ${s.building}</div>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+            
+            if (selectedComparison.length === 2) showComparison(allSpots);
+            else document.getElementById('comparisonResults').innerHTML = '<div class="empty-state"><p>👆 Select 2 spots above</p></div>';
+        }
+
+        function toggleComparison(id) {
+            if (selectedComparison.includes(id)) selectedComparison = selectedComparison.filter(s => s !== id);
+            else {
+                if (selectedComparison.length >= 2) selectedComparison.shift();
+                selectedComparison.push(id);
+            }
+            loadComparisonView();
+        }
+
+        function showComparison(allSpots) {
+            const s1 = allSpots.find(s => s.id === selectedComparison[0]);
+            const s2 = allSpots.find(s => s.id === selectedComparison[1]);
+            
+            document.getElementById('comparisonResults').innerHTML = `
+                <div class="comparison-container">
+                    <div class="comparison-side">
+                        <h2 style="margin-bottom:20px">${s1.name}</h2>
+                        <img src="${s1.image}" style="width:100%; border-radius:15px; margin-bottom:20px; border:3px solid #fff">
+                        <div style="font-size:3em">${s1.rating || s1.gigEm}</div>
+                        <div style="font-size:2.5em; margin:15px 0">${s1.score}/10</div>
+                        <p>🏫 ${s1.building}</p>
+                        <div style="background:rgba(0,0,0,0.4); padding:20px; border-radius:12px; margin-top:20px; border:2px solid #fff">
+                            <strong>Tricks:</strong><br>${s1.tricks}
+                        </div>
+                    </div>
+                    <div class="comparison-side">
+                        <h2 style="margin-bottom:20px">${s2.name}</h2>
+                        <img src="${s2.image}" style="width:100%; border-radius:15px; margin-bottom:20px; border:3px solid #fff">
+                        <div style="font-size:3em">${s2.rating || s2.gigEm}</div>
+                        <div style="font-size:2.5em; margin:15px 0">${s2.score}/10</div>
+                        <p>🏫 ${s2.building}</p>
+                        <div style="background:rgba(0,0,0,0.4); padding:20px; border-radius:12px; margin-top:20px; border:2px solid #fff">
+                            <strong>Tricks:</strong><br>${s2.tricks}
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-top:40px; padding:30px; background:rgba(255,255,255,0.15); border-radius:20px; border:3px solid #fff">
+                    <h3 style="font-size:2em; margin-bottom:20px">🏆 Winner</h3>
+                    <p style="font-size:2em; font-weight:bold">${s1.score > s2.score ? s1.name + ' 👍' : s2.score > s1.score ? s2.name + ' 👍' : "It's a tie! 🤝"}</p>
+                    <p style="margin-top:20px; font-size:1.3em">
+                        ${s1.score > s2.score ? s1.name + ' is better by ' + (s1.score - s2.score).toFixed(1) + ' points!' : 
+                          s2.score > s1.score ? s2.name + ' is better by ' + (s2.score - s1.score).toFixed(1) + ' points!' :
+                          'Both spots are equally rad! Gig \'em! 👍'}
+                    </p>
+                </div>
+            `;
+        }
+
+        function resetAnalyzer() {
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            imageAnalysisData = null;
+            currentAnalysis = null;
+        }
+    </script>
+</body>
+</html>
